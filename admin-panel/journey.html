@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="uz">
 <head>
 <meta charset="utf-8">
@@ -32,9 +32,17 @@ body{margin:0;min-height:100vh;background:var(--bg);color:var(--text)}
 .intro small{font-size:10.5px;font-weight:800;letter-spacing:2px;color:#ffffffcc}
 .intro b{display:block;font-size:22px;font-weight:800;margin-top:6px}
 .intro p{margin:6px 0 0;font-size:12.5px;color:#ffffffd9}
-.days{margin-top:20px;display:grid;gap:10px}
-.day{display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
-.day .d-num{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--blue);flex:none}
+.days{margin-top:14px;display:grid;gap:14px}
+.day{display:flex;align-items:center;gap:17px;padding:17px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.day .d-num{width:44px;height:44px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-weight:800;font-size:14px;color:var(--blue);flex:none}
+.day{position:relative}
+.day-icon-wrap{position:relative;flex:none}
+.day-icon{width:48px;height:48px;border:0;border-radius:14px;background:var(--soft);display:grid;place-items:center;font-size:23px;cursor:pointer;box-shadow:0 2px 8px #1d2b4b0d;transition:transform .18s,background .18s}
+.day-icon:hover,.day-icon:focus-visible{transform:translateY(-2px) scale(1.04);outline:2px solid var(--blue);outline-offset:2px}
+.day.done .day-icon{background:#e7f6ec}
+.word-pop{position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%,6px);width:max-content;max-width:min(250px,75vw);padding:9px 12px;border-radius:11px;background:#1c2942;color:#fff;font-size:12px;font-weight:700;line-height:1.45;text-align:center;box-shadow:0 8px 22px #101a3033;opacity:0;visibility:hidden;pointer-events:none;transition:.16s;z-index:4}
+.word-pop::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#1c2942}
+.day-icon-wrap.open .word-pop{opacity:1;visibility:visible;transform:translate(-50%,0)}
 .day .d-body{flex:1;min-width:0}
 .day .d-body b{display:block;font-size:14px;font-weight:700}
 .day .d-body small{font-size:11.5px;color:var(--muted)}
@@ -71,27 +79,59 @@ html[data-theme="dark"] .day.done .d-state{background:#1d3a28;color:#57d18a}
 <script>
 const TOTAL_DAYS = 91;
 const lessonTitles = [
-  'Salomlashish — Hallo, Guten Tag',
-  'Kundalik tanishuv — Wie heißt du?',
-  'Kafe va buyurtma — Ich möchte…',
-  'Oila — die Familie',
+  { title: 'Salomlashish — Hallo, Guten Tag', icon: '👋', words: 'Hallo — Salom · Guten Tag — Xayrli kun' },
+  { title: 'Kundalik tanishuv — Wie heißt du?', icon: '🤝', words: 'Wie heißt du? — Isming nima? · Ich heiße… — Mening ismim…' },
+  { title: 'Kafe va buyurtma — Ich möchte…', icon: '☕', words: 'Ich möchte einen Kaffee — Men qahva xohlayman · Bitte — Iltimos' },
+  { title: 'Oila — die Familie', icon: '👨‍👩‍👧', words: 'die Familie — Oila · die Mutter — Ona · der Vater — Ota' },
 ];
 
 function paintDays(completedDays) {
   const list = document.getElementById('dayList');
   const done = Array.isArray(completedDays) ? completedDays : [];
-  list.innerHTML = lessonTitles.map((title, i) => {
+  list.innerHTML = lessonTitles.map((lesson, i) => {
     const n = i + 1;
     const isDone = done.includes(n);
     return `
       <div class="day ${isDone ? 'done' : ''}">
         <span class="d-num">${isDone ? '✓' : n}</span>
-        <span class="d-body"><b>${title}</b><small>${n}-kun</small></span>
+        <span class="day-icon-wrap">
+          <button class="day-icon" type="button" aria-label="${lesson.title} so‘zlari" aria-expanded="false">${lesson.icon}</button>
+          <span class="word-pop" role="status">${lesson.words}</span>
+        </span>
+        <span class="d-body"><b>${lesson.title}</b><small>${n}-kun</small></span>
         <span class="d-state ${isDone ? '' : 'locked'}">${isDone ? 'O‘tilgan' : 'Yopiq'}</span>
       </div>`;
   }).join('');
+  list.querySelectorAll('.day-icon').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const wrap = button.closest('.day-icon-wrap');
+      const wasOpen = wrap.classList.contains('open');
+      list.querySelectorAll('.day-icon-wrap').forEach((item) => {
+        item.classList.remove('open');
+        item.querySelector('.day-icon')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!wasOpen) {
+        wrap.classList.add('open');
+        button.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
   document.getElementById('journeyCount').textContent = done.length + ' / ' + TOTAL_DAYS + ' kun';
 }
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.day-icon-wrap.open').forEach((wrap) => {
+    wrap.classList.remove('open');
+    wrap.querySelector('.day-icon')?.setAttribute('aria-expanded', 'false');
+  });
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') document.querySelectorAll('.day-icon-wrap.open').forEach((wrap) => {
+    wrap.classList.remove('open');
+    wrap.querySelector('.day-icon')?.setAttribute('aria-expanded', 'false');
+  });
+});
 
 (async function initJourney() {
   const me = await guard('student');

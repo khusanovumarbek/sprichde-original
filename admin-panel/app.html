@@ -39,7 +39,7 @@ body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;-webkit-fo
 .hello small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.4px}
 .hello b{font-size:22px;font-weight:800;display:block;margin-top:2px}
 .hello p{margin:4px 0 0;font-size:12.5px;color:var(--muted)}
-.avatar{width:46px;height:46px;border-radius:15px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;flex:none}
+.avatar{width:46px;height:46px;border:0;padding:0;border-radius:15px;background:var(--blue);color:#fff;display:grid;place-items:center;font-weight:800;font-size:16px;flex:none;cursor:pointer;font-family:inherit;transition:transform .18s,box-shadow .18s}.avatar:hover,.avatar:focus-visible{transform:translateY(-2px);box-shadow:0 5px 14px #3157a433;outline:2px solid var(--blue);outline-offset:3px}
 
 /* ---------- 91 kunlik sayohat (katta karta) ---------- */
 .journey-card{
@@ -79,8 +79,17 @@ body{margin:0;background:var(--bg);color:var(--text);min-height:100vh;-webkit-fo
 .row-meta{display:flex;justify-content:space-between;margin-top:10px;font-size:12px;font-weight:600;color:#ffffffd9}
 
 /* ---------- Xususiyat kartalari ---------- */
-.feature{margin-top:14px;display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:transform .12s, box-shadow .15s;text-decoration:none;color:inherit}
+.feature{margin-top:16px;display:flex;align-items:center;gap:18px;padding:18px;border-radius:20px;background:var(--surface);border:1px solid var(--line);cursor:pointer;transition:transform .12s, box-shadow .15s;text-decoration:none;color:inherit}
 .feature:active{transform:scale(.985)}
+.feature[hidden]{display:none!important}
+@media (hover:hover) and (pointer:fine){
+  .feature{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+  .feature:hover{transform:translateY(-2px);box-shadow:0 10px 24px #1d2b4b14;border-color:var(--soft-line)}
+  .feature:hover .f-icon{transform:scale(1.08) rotate(-3deg)}
+  .f-icon{transition:transform .2s ease,background .2s ease}
+  .feature:hover .f-arrow{transform:translateX(3px)}
+  .f-arrow{transition:transform .2s ease}
+}
 .feature.accent{background:var(--soft-2);border-color:var(--soft-line)}
 /* Sinov darsi — ajralib turadigan, "yangi" ko'rinish */
 .feature.tryout{background:linear-gradient(135deg,#fff6e6,#ffefd4);border-color:#f5dfb0}
@@ -316,7 +325,7 @@ html[data-theme="dark"] .pay-status.warn{background:#3c3218;color:#f0c96a}
         <b id="userName">Foydalanuvchi</b>
         <p>Bugun nemis tilida yana bir qadam.</p>
       </div>
-      <div class="avatar" id="userAvatar">?</div>
+      <button class="avatar" id="userAvatar" type="button" aria-label="Profilga o‘tish" title="Profilga o‘tish">?</button>
     </div>
 
     <!-- 91 kunlik sayohat (katta karta) -->
@@ -333,7 +342,7 @@ html[data-theme="dark"] .pay-status.warn{background:#3c3218;color:#f0c96a}
     </a>
 
     <!-- Sinov darsi (do'stni taklif qilishdan tepasida) -->
-    <a class="feature tryout" href="trial.html">
+    <a class="feature tryout" id="trialFeature" href="trial.html">
       <span class="f-icon">🎬</span>
       <span class="f-body"><b>Sinov darsi <span class="badge-new">BEPUL</span></b><small>Sinab ko‘ring — 1-dars</small></span>
       <span class="f-arrow">›</span>
@@ -516,7 +525,11 @@ function paintUser() {
 }
 
 function paintJourney() {
-  const done = progress.completedDays.length;
+  const completedDays = Array.isArray(progress.completedDays) ? progress.completedDays : [];
+  const done = completedDays.length;
+  const trialFeature = el('trialFeature');
+  // Sinov darsi birinchi dars yakunlangach bosh sahifadan butunlay olib tashlanadi.
+  if (trialFeature) trialFeature.hidden = Boolean(progress.trialDone || completedDays.includes(1));
   const total = progress.totalDays || TOTAL_DAYS;
   const percent = Math.round((done / total) * 100);
   el('journeyFill').style.width = percent + '%';
@@ -719,6 +732,12 @@ document.getElementById('checkPractice').addEventListener('click', () => {
 shuffleExercise();
 
 // ---------- Navigatsiya ----------
+function openProfileView() {
+  const profileButton = document.querySelector('.nav button[data-view="profile"]');
+  if (profileButton) profileButton.click();
+}
+el('userAvatar').addEventListener('click', openProfileView);
+
 document.querySelectorAll('.nav button').forEach((btn) => btn.addEventListener('click', () => {
   document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b === btn));
   const view = btn.dataset.view;
